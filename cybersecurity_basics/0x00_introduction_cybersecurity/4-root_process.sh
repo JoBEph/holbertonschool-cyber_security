@@ -1,3 +1,2 @@
 #!/bin/bash
-argument=$1
-ps aux | grep -v "$argument"
+ps aux | grep -v "$1"
