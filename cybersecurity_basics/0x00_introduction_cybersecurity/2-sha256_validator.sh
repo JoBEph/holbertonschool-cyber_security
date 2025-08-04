@@ -1,4 +1,5 @@
 #!/bin/bash
-sha256sum ./2-sha256_validator.sh
+md5sum -c ./2-sha256_validator.sh
 echo test_file: 'OK'
+
 
