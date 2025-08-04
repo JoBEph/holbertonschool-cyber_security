@@ -1,5 +1,2 @@
 #!/bin/bash
-md5sum -c ./2-sha256_validator.sh
-echo test_file: 'OK'
-
-
+[ -f "$1" ] && [ "$(sha256sum "$1" | cut -d' ' -f1)" = "$2" ] && echo "$1: OK" || echo "$1: FAIL"
