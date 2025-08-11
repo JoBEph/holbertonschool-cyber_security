@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo last -n 5
+sudo wtmpdb last -n 5
