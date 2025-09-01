@@ -1,8 +1,0 @@
-No.     Time           Source        Destination     Protocol Length Info
-  42    12.345678901   10.8.0.77     10.8.0.78       ICMP     84     Echo (ping) request
-
-Frame 42: 84 bytes on wire (672 bits), 84 bytes captured (672 bits) on interface tun0, id 0
-Internet Protocol Version 4, Src: 10.8.0.77, Dst: 10.8.0.78
-Internet Control Message Protocol
-    Type: 8 (Echo (ping) request)
-    Code: 0
