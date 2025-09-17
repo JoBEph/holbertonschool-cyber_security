@@ -1,8 +1,7 @@
 #!/bin/bash
 
-decoded=$(echo "$input" | base64 --decode)
 if [ -z "$1" ]; then
-    echo "Usage: $0 {xor}<base64_string> or <base64_string>"
+    echo "Usage: $0 {xor}<base64_string>"
     exit 1
 fi
 
@@ -14,5 +13,6 @@ if [[ "$1" == \{xor\}* ]]; then
         printf \\$(printf '%03o' $((c ^ 95)))
     done
 else
-    echo "$1" | base64 --decode 2>/dev/null
+    # pour un simple base64 sans xor
+    echo -n "$1" | base64 --decode 2>/dev/null
 fi
