@@ -7,17 +7,11 @@ fi
 
 input="${1#\{xor\}}"
 
-decoded=$(echo "$input" | base64 --decode 2>/dev/null)
-if [ $? -ne 0 ]; then
-    echo "Erreur : Base64 fail."
-    exit 1
-fi
+decoded=$(echo "$input" | base64 --decode)
 
-output=$(python3 - <<EOF
-data = "$decoded"
-key = 95
-print(''.join([chr(ord(c) ^ key) for c in data]), end='')
-EOF
-)
+for ((i=0; i<${#decoded}; i++)); do
+    c=$(printf "%d" "'${decoded:$i:1}")
+    printf \\$(printf '%03o' $((c ^ 95)))
+done
 
-echo "$output"
+echo
