@@ -13,5 +13,3 @@ for ((i=0; i<${#decoded}; i++)); do
     c=$(printf "%d" "'${decoded:$i:1}")
     printf \\$(printf '%03o' $((c ^ 95)))
 done
-
-echo
