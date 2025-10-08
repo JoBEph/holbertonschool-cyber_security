@@ -1,2 +1,2 @@
-$ cat 2-vendor.txt
-http://www.seantheme.com/hud/
+cat 2-vendor.txt
+https://github.com/CodeByZach/pace/
