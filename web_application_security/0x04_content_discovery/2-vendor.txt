@@ -1,2 +1,1 @@
-cat 2-vendor.txt
 https://github.com/CodeByZach/pace/
