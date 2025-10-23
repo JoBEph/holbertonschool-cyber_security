@@ -1,2 +1,2 @@
 #!/bin/bash
-semanage port -l | grep http
+aa-status
