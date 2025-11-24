@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import sys
+""" Script that reads and overwrite the heap memory of a given process."""
+
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: read_write_heap.py pid search_string replace_string")
+        sys.exit(1)
+    pid = sys.argv[1]
+    search = sys.argv[2].encode("ascii")
+    owerwite = sys.argv[3].encode("ascii")
+    if len(search) != len(owerwite):
+        print("Error: search and replace strings must have the same length")
+        sys.exit(1)
+    try:
+        read_write_heap(pid, search, owerwite)
+    except Exception as e:
+        print("Error:", e)
+        sys.exit(1)
+
+
+def get_heap_bounds(pid):
+    path = f"/proc/{pid}/maps"
+    with open(path, 'r') as range:
+        for line in range:
+            if "[heap]" in line:
+                p_range = line.split(' ')[0]
+                start, end = (int(x, 16) for x in p_range.split("-"))
+                return start, end
+    raise Exception("No heap segment found")
+
+
+def read_write_heap(pid, search, replace):
+    start, end = get_heap_bounds(pid)
+    length = end - start
+    mem_path = f"/proc/{pid}/mem"
+    with open(mem_path, 'r+b', 0) as mem_file:
+        mem_file.seek(start)
+        heap_data = mem_file.read(length)
+        index = heap_data.find(search)
+        if index == -1:
+            raise Exception("Search string not found in heap")
+        mem_file.seek(start + index)
+        mem_file.write(replace)
+        print("Replaced '{}' with '{}' at address {}".format(
+            search.decode(), replace.decode(), hex(start + index)
+        ))
+
+
+if __name__ == "__main__":
+    main()
