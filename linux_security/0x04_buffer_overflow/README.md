@@ -1,4 +1,5 @@
 
+<img width="1536" height="1024" alt="Buffer Overflowgegenerate" src="https://github.com/user-attachments/assets/925e6732-ae8f-4153-91d9-f4587864ed13" />
 
 # Buffer Overflow: When Data Breaks the Rules
 
