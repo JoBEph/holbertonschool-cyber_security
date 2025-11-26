@@ -1,5 +1,4 @@
 
-![Uploading Buffer Overflowgegenerate.png…]()
 
 # Buffer Overflow: When Data Breaks the Rules
 
