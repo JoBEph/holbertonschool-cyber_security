@@ -9,12 +9,12 @@ def main():
         sys.exit(1)
     pid = sys.argv[1]
     search = sys.argv[2].encode("ascii")
-    owerwite = sys.argv[3].encode("ascii")
-    if len(search) != len(owerwite):
+    overwrite = sys.argv[3].encode("ascii")
+    if len(search) != len(overwrite):
         print("Error: search and replace strings must have the same length")
         sys.exit(1)
     try:
-        read_write_heap(pid, search, owerwite)
+        read_write_heap(pid, search, overwrite)
     except Exception as e:
         print("Error:", e)
         sys.exit(1)
