@@ -57,9 +57,6 @@ def read_write_heap(pid, search, replace):
             raise Exception("Search string not found in heap")
         mem_file.seek(start + index)
         mem_file.write(replace)
-        print("Replaced '{}' with '{}' at address {}".format(
-            search.decode(), replace.decode(), hex(start + index)
-        ))
 
 
 if __name__ == "__main__":
