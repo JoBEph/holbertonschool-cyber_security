@@ -20,7 +20,8 @@ def main():
         sys.exit(1)
 
     read_write_heap(pid, search, overwrite)
-    print("SUCCESS!")
+    if "__main__" in __name__:
+        print("SUCCESS!")
 
 
 def usage():
