@@ -1,6 +1,6 @@
-#!/usr/bin/python3
-
-"""Read and write to the heap segment of a process given its PID."""
+"""
+Read and write to the heap segment of a process given its PID.
+"""
 
 import sys
 
@@ -17,17 +17,7 @@ def main():
         print("Error: search and replace strings must have the same length")
         sys.exit(1)
 
-    try:
-        read_write_heap(pid, search, overwrite)
-    except PermissionError:
-        print("Error: Permission denied. Try running as sudo.")
-        sys.exit(1)
-    except FileNotFoundError:
-        print("Error: Process not found. Is the PID correct?")
-        sys.exit(1)
-    except Exception as e:
-        print("Error:", e)
-        sys.exit(1)
+    read_write_heap(pid, search, overwrite)
 
 
 def usage():
@@ -37,7 +27,9 @@ def usage():
 
 
 def get_heap_bounds(pid):
-    """Get the start and end addresses of the heap segment of a process."""
+    """
+    Get the start and end addresses of the heap segment of a process.
+    """
     path = f"/proc/{pid}/maps"
     with open(path, 'r') as range:
         for line in range:
@@ -49,7 +41,9 @@ def get_heap_bounds(pid):
 
 
 def read_write_heap(pid, search, replace):
-    """Read the heap of a process, search for a string, and replace it."""
+    """
+    Read the heap of a process, search for a string, and replace it.
+    """
     start, end = get_heap_bounds(pid)
     length = end - start
     mem_path = f"/proc/{pid}/mem"
