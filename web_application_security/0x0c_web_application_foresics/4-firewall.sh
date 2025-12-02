@@ -1,2 +1,2 @@
 #!/bin/bash
-awk '/firewall/ {print}' auth.log | wc -l
+awk '/iptables/' auth.log | grep 'A INPUT' | wc -l | sort -u
