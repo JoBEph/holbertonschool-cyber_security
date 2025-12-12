@@ -51,3 +51,34 @@ L’application redirige également certains traitements vers le **port 3001**, 
 2- Comme dans le “flag 0”, utiliser l’un des chemins proposés, ici « /list-of-items »
 
   <img width="1036" height="517" alt="2_2SSF" src="https://github.com/user-attachments/assets/f103e51c-3282-466a-932b-ef40b4a6ae29" />
+
+## Exploit SSRF to breach our security!
+
+L’application cible est accessible via [**http://web0x08.hbtn/app3/**](http://web0x08.hbtn/app3/)
+
+
+Après connexion, l’utilisateur peut parcourir les articles disponibles et accéder à la fonctionnalité de réduction de chèque, toujours au centre de l’analyse SSRF.
+
+Dans cette nouvelle itération, un système de sécurité renforcé a été ajouté : l’objectif est de vérifier s’il résiste réellement aux tentatives de contournement.
+
+Le paramètre **articleApi** demeure le point sensible à examiner, tandis que l’application redirige certains traitements internes vers le **port 3002**, un élément essentiel pour comprendre son comportement.
+
+###   
+
+### **1 – Traduire la valeur encodée du paramètre articleApi**
+
+La première étape consiste à décoder la valeur suivante :
+
+articleApi=http%3A%2F%2Fdiscount.newshop.tn%3A3002%2Fapp3%2Fcheck-reduction
+
+ce qui donne :
+
+articleApi=http://discount.newshop.tn:3002/admin/
+
+Image
+
+  
+
+2- Comme dans les flags précédents, récupérer l’élément visé dans le même dossier admin
+
+> image
