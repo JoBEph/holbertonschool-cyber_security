@@ -45,14 +45,9 @@ L’application redirige également certains traitements vers le **port 3001**, 
 
 1 – Modifier l’adresse Localhost en utilisant une représentation hexadécimale pour contourner le filtre
 
-  
+<img width="1023" height="474" alt="task2SSF" src="https://github.com/user-attachments/assets/d35cf535-312a-410d-83c4-96ab51a81cb0" />
 
-/\*image \*/
-
-  
 
 2- Comme dans le “flag 0”, utiliser l’un des chemins proposés, ici « /list-of-items »
 
-  
-
-> /\*image \*/
+  <img width="1036" height="517" alt="2_2SSF" src="https://github.com/user-attachments/assets/f103e51c-3282-466a-932b-ef40b4a6ae29" />
