@@ -75,10 +75,8 @@ ce qui donne :
 
 articleApi=http://discount.newshop.tn:3002/admin/
 
-Image
-
-  
+<img width="1040" height="477" alt="TASK3SSF" src="https://github.com/user-attachments/assets/29c9ef36-6b9c-49e4-b948-37b61bf5fd21" />
 
 2- Comme dans les flags précédents, récupérer l’élément visé dans le même dossier admin
 
-> image
+<img width="1032" height="495" alt="TASK3_2SSF" src="https://github.com/user-attachments/assets/a45785dc-d01d-4776-a8a9-552cf0215e88" />
