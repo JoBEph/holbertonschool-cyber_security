@@ -34,7 +34,6 @@ En poursuivant l’investigation, l’étude du chemin retrouvé dans l’URL (`
 
 L’application cible est accessible via [**http://web0x08.hbtn/app2/**](http://web0x08.hbtn/app2/)
 
-.
 
 Après connexion, il est possible de parcourir les articles du site et d’utiliser la fonctionnalité de réduction de chèque, déjà identifiée auparavant comme sensible aux attaques SSRF.
 
