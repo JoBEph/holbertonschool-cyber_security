@@ -29,6 +29,9 @@ En poursuivant l’investigation, l’étude du chemin retrouvé dans l’URL (`
 
 <img width="1043" height="522" alt="task1_2ssf" src="https://github.com/user-attachments/assets/de40a8c1-ec4c-43fb-86cb-5ea62347332b" />
 
+## Is our security a fortress or a sieve? Let's SSRF and find out!
+
+
 L’application cible est accessible via [**http://web0x08.hbtn/app2/**](http://web0x08.hbtn/app2/)
 
 .
