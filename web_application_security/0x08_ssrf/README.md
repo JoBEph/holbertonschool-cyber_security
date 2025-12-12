@@ -28,3 +28,29 @@ Cette étape consiste à analyser son comportement en conditions contrôlées, n
 En poursuivant l’investigation, l’étude du chemin retrouvé dans l’URL (`/list-of-items`) permet d’inspecter la structure HTML renvoyée et d’identifier la présence éventuelle d’éléments sensibles (comme une colonne `flag` dans un contexte de test ou de CTF).
 
 <img width="1043" height="522" alt="task1_2ssf" src="https://github.com/user-attachments/assets/de40a8c1-ec4c-43fb-86cb-5ea62347332b" />
+
+L’application cible est accessible via [**http://web0x08.hbtn/app2/**](http://web0x08.hbtn/app2/)
+
+.
+
+Après connexion, il est possible de parcourir les articles du site et d’utiliser la fonctionnalité de réduction de chèque, déjà identifiée auparavant comme sensible aux attaques SSRF.
+
+Dans cette nouvelle version, un filtre supplémentaire a été ajouté : l’objectif est de vérifier s’il bloque réellement les contournements possibles.
+
+L’application redirige également certains traitements vers le **port 3001**, ce qui constitue un point important à examiner.
+
+  
+
+1 – Modifier l’adresse Localhost en utilisant une représentation hexadécimale pour contourner le filtre
+
+  
+
+/\*image \*/
+
+  
+
+2- Comme dans le “flag 0”, utiliser l’un des chemins proposés, ici « /list-of-items »
+
+  
+
+> /\*image \*/
