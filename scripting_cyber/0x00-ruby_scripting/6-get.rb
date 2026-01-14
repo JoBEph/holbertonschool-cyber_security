@@ -10,7 +10,7 @@ def get_request(url)
   
   puts "Response status: #{response.code} #{response.message}"
   
-  if response.is_a?(Net::HTTPSuccess)
+  if response.code.to_i >= 200 && response.code.to_i < 300
     puts "Response body:"
     data = JSON.parse(response.body)
     puts JSON.pretty_generate(data)
