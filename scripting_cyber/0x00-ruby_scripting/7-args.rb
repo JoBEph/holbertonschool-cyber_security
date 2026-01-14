@@ -5,7 +5,7 @@ def print_arguments
     puts "No arguments provided."
   else
     ARGV.each do |arg|
-      puts arg
+      puts "#{arg}"
     end
   end
 end
