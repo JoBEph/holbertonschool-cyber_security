@@ -5,10 +5,12 @@ require 'uri'
 require 'json'
 
 def get_request(url)
-  uri = URI.parse(url)
+  uri = URI(url)
   response = Net::HTTP.get_response(uri)
   
-  puts "Response status: #{response.code} #{response.message}"
+  status_code = response.code
+  status_message = response.message
+  puts "Response status: #{status_code} #{status_message}"
   
   if response.code.to_i >= 200 && response.code.to_i < 300
     puts "Response body:"
