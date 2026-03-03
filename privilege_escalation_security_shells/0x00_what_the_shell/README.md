@@ -47,3 +47,4 @@ To bypass the space restriction, we use the `${IFS}` environment variable (Inter
 ```bash
 more${IFS}/home/user/flag
 ```
+<img width="896" height="317" alt="Screenshot 2026-03-03 103330" src="https://github.com/user-attachments/assets/9926ad9c-e0b5-4d5f-bc20-062ad35f5111" />
