@@ -101,7 +101,7 @@ Password to type: Sup3erSecretPass4ADm1n
 
 ---
 
-## Conclusion
+## Conclusion Task 0
 
 Le laboratoire a été complété avec succès en exploitant des identifiants stockés de manière non sécurisée dans les fichiers de configuration Windows. Le flag final a été récupéré en exécutant `flag.exe` en tant que `SuperAdministrator`.
 
@@ -111,3 +111,84 @@ Le laboratoire a été complété avec succès en exploitant des identifiants st
 - L'encodage Base64 n'est pas une méthode de chiffrement sécurisée
 - La commande `runas` permet l'exécution de programmes avec des privilèges différents
 - Les expressions régulières sont efficaces pour extraire des données structurées
+
+---
+
+# TASK 1 : Privilege Escalation via SAM & SYSTEM Backup Files
+
+## Objectif
+
+Exploiter une vulnérabilité du système pour récupérer le mot de passe du compte `superAdministrator` et récupérer le flag.
+
+**VM Cible :** LAB02  
+**Compte utilisé :** Sammy  
+**Mot de passe Sammy :** Sammy
+
+---
+
+## Étape 1 : Énumération des Privilèges
+
+Télécharger et exécuter le script PowerShell **PrivCheck** sur le système cible pour identifier les vulnérabilités.
+
+**Analyse de la sortie :**
+- Identifier la vulnérabilité liée aux fichiers de sauvegarde SAM et SYSTEM
+- Repérer les chemins d'accès aux fichiers sensibles
+
+---
+
+## Étape 2 : Recherche et Exploitation
+
+**Recherche :**
+- Rechercher en ligne la vulnérabilité identifiée
+- Localiser et télécharger un exploit fonctionnel (fichier `.exe`)
+
+**Exploitation :**
+- Utiliser l'exploit pour extraire les fichiers critiques du système cible (SAM et SYSTEM)
+
+---
+
+## Étape 3 : Extraction des Hashes
+
+**Sur Kali Linux :**
+
+1. S'assurer que le toolkit **Impacket** est installé
+2. Utiliser l'outil `secretsdump.py` pour extraire les hashes de mots de passe à partir des fichiers SAM et SYSTEM
+
+**Commande exemple :**
+```bash
+secretsdump.py -sam SAM -system SYSTEM LOCAL
+```
+
+---
+
+## Étape 4 : Accès Session Administrateur
+
+**Méthode PowerShell avec Credentials :**
+
+Utiliser PowerShell pour exécuter des commandes en tant que `superAdministrator` et copier les fichiers protégés vers un emplacement accessible.
+
+```powershell
+$password = ConvertTo-SecureString "P@ssword" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential("superAdministrator", $password)
+Start-Process "cmd.exe" -ArgumentList "/c copy C:\Users\superAdministrator\Desktop\* C:\Users\Public\" -Credential $cred
+Start-Sleep -s 2
+ls C:\Users\Public\
+```
+
+**Récupération du flag :**
+- Ouvrir une session administrateur en utilisant les hashes récupérés
+- Localiser et récupérer le flag
+- Sauvegarder le flag dans `1-flag.txt`
+
+---
+
+## Conclusion Task 1
+
+L'exploitation des fichiers de sauvegarde SAM et SYSTEM permet d'extraire les hashes de mots de passe et d'obtenir un accès administrateur. Cette technique démontre l'importance de protéger les fichiers système sensibles.
+
+### Leçons Apprises
+
+- Les fichiers SAM et SYSTEM contiennent des informations critiques pour l'authentification Windows
+- L'outil `secretsdump.py` d'Impacket est efficace pour extraire les hashes
+- PowerShell permet d'exécuter des commandes avec des credentials spécifiques
+- Les fichiers de sauvegarde non protégés représentent un risque de sécurité majeur
